@@ -1,0 +1,5 @@
+# Server keys & generated config - never commit
+server/data/
+server/rustdesk-keys-*.tar.gz
+# Your real inventory may contain notes you don't want in git
+computers.csv
