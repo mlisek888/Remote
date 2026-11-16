@@ -1,0 +1,12 @@
+{
+  "app_name": "FoxZdalny",
+  "display_name": "Fox Zdalny",
+  "bundle_id": "pl.foxfotograf.zdalny",
+  "override_settings": {
+    "verification-method": "use-permanent-password",
+    "approve-mode": "password",
+    "enable-check-update": "N",
+    "allow-auto-update": "N"
+  },
+  "hard_settings": {}
+}

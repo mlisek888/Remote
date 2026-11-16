@@ -1,5 +1,8 @@
 # Remote – prywatny serwer zdalnego pulpitu (RustDesk)
 
+> **Fox Zdalny**: własna aplikacja (Twoja nazwa, ikona, serwer wbudowany na stałe) jest opisana
+> w [`client/README.md`](client/README.md). Ten plik opisuje serwer i instalację zwykłego RustDeska.
+
 Twój własny serwer do zdalnego dostępu do komputerów Windows / macOS / Linux.
 Silnik: [RustDesk](https://github.com/rustdesk/rustdesk) (open source), serwer `hbbs` + `hbbr` w Dockerze.
 Żadnych publicznych serwerów RustDesk – cały ruch idzie przez Twoją maszynę
