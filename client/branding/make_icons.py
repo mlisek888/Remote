@@ -83,13 +83,13 @@ def svg():
     return "".join(parts)
 
 
-def logo(icon, text_color):
+def logo(icon, text_color, name=NAME):
     W, H = 600, 120  # displayed at max 300x60
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     img.paste(icon.resize((H, H), Image.LANCZOS), (0, 0))
     d = ImageDraw.Draw(img)
     f = ImageFont.truetype(FONT, 72)
-    d.text((H + 20, H // 2), NAME, font=f, fill=text_color, anchor="lm")
+    d.text((H + 20, H // 2), name, font=f, fill=text_color, anchor="lm")
     return img
 
 
@@ -120,6 +120,13 @@ def main():
     logo(icon, (40, 40, 40)).save(p("flutter/assets/logo.png"))
     logo(icon, (40, 40, 40)).save(p("flutter/assets/logo_light.png"))
     logo(icon, (240, 240, 240)).save(p("flutter/assets/logo_dark.png"))
+    # Per-variant logos, copied into that variant's package (Flutter assets) at packaging time.
+    for vid, vname in [("fox-pomoc", "Fox Pomoc")]:
+        vdir = os.path.join(HERE, "variant-assets", vid)
+        os.makedirs(vdir, exist_ok=True)
+        logo(icon, (40, 40, 40), vname).save(os.path.join(vdir, "logo.png"))
+        logo(icon, (40, 40, 40), vname).save(os.path.join(vdir, "logo_light.png"))
+        logo(icon, (240, 240, 240), vname).save(os.path.join(vdir, "logo_dark.png"))
     print("overlay written to", OUT)
 
 

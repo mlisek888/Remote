@@ -433,6 +433,7 @@ jobs:
       run: |
         rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc
         cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json
+        cp ./fox/client/branding/variant-assets/fox-pomoc/* ./rustdesk-pomoc/data/flutter_assets/assets/
         pushd ./libs/portable
         python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe
         popd
@@ -605,7 +606,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p ./pomoc && ditto ./flutter/build/macos/Build/Products/Release/RustDesk.app ./pomoc/RustDesk.app
-        bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json
+        bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json fox/client/branding/variant-assets/fox-pomoc
         bash fox/client/macos_rebrand.sh fox/client/variants/fox-zdalny.json ./flutter/build/macos/Build/Products/Release
     - name: Create dmg
       shell: bash

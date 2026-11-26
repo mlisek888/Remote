@@ -128,6 +128,7 @@ win["steps"] += [
     {"name": "Build Fox Pomoc (support) executable", "shell": "bash", "run": L(
         "rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc\n"
         "cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json\n"
+        "cp ./fox/client/branding/variant-assets/fox-pomoc/* ./rustdesk-pomoc/data/flutter_assets/assets/\n"
         "pushd ./libs/portable\n"
         "python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe\n"
         "popd\n"
@@ -153,7 +154,8 @@ DMG = ("create-dmg --volname \"{disp}\" --icon \"{app}.app\" 200 190 --hide-exte
 mac["steps"] += [
     {"name": "Rebrand app bundles", "shell": "bash", "run": L(
         "mkdir -p ./pomoc && ditto %s/RustDesk.app ./pomoc/RustDesk.app\n"
-        "bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json\n"
+        "bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json "
+        "fox/client/branding/variant-assets/fox-pomoc\n"
         "bash fox/client/macos_rebrand.sh fox/client/variants/fox-zdalny.json %s\n" % (REL, REL))},
     {"name": "Create dmg", "shell": "bash", "run": L(
         'CREATE_DMG="$(readlink -f "$(command -v create-dmg)")"\n'
