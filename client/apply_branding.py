@@ -26,6 +26,11 @@ host = os.environ.get("FOX_HOST", "").strip()
 key = os.environ.get("FOX_KEY", "").strip()
 if not host or not key:
     sys.exit("FOX_HOST and FOX_KEY must be set (GitHub: Settings > Secrets and variables > Actions)")
+if not re.fullmatch(r"[A-Za-z0-9+/]{43}=", key):
+    sys.exit("FOX_KEY is not a valid server key: expected 44 characters ending with '=' "
+             "(contents of id_ed25519.pub), got %d characters ending with %r" % (len(key), key[-2:]))
+if not re.fullmatch(r"[A-Za-z0-9.-]+(:[0-9]+)?", host):
+    sys.exit("FOX_HOST must be a bare host name or IP (e.g. zdalny.example.com), got %r" % host)
 if not os.path.isfile(os.path.join(ROOT, "src/common.rs")):
     sys.exit("run this from the RustDesk source root")
 

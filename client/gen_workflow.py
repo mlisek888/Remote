@@ -83,6 +83,10 @@ jobs["check-config"] = {
                         '  echo "::error::Set repo secrets FOX_HOST and FOX_KEY (Settings > Secrets and variables > Actions)"\n'
                         '  exit 1\n'
                         'fi\n'
+                        'if ! printf %s "$FOX_KEY" | grep -Eq "^[A-Za-z0-9+/]{43}=$"; then\n'
+                        '  echo "::error::FOX_KEY must be exactly the 44-character key from id_ed25519.pub, ending with = (got ${#FOX_KEY} characters)"\n'
+                        '  exit 1\n'
+                        'fi\n'
                         'echo "Server: $FOX_HOST"\n')}],
 }
 
