@@ -26,6 +26,33 @@ Wymagania: Linux (VPS lub domowy serwer), publiczny IP lub domena, otwarte porty
 
 Za routerem domowym → przekieruj te porty na serwer.
 
+### Gdy serwer stoi w tej samej sieci co komputery (serwer w domu)
+
+Komputery w domu też muszą łączyć się po **publicznym** adresie, więc router musi umieć
+„zawrócić” ruch do serwera (**hairpin NAT**). Bez tego w domu aplikacja wisi na „Łączenie”,
+a przez LTE działa. MikroTik (podmień IP publiczny, sieć LAN i adres serwera):
+
+```
+/ip firewall nat add chain=dstnat dst-address=<IP_PUBLICZNY> protocol=tcp dst-port=21115-21117 action=dst-nat to-addresses=<IP_SERWERA> comment="RustDesk hairpin"
+/ip firewall nat add chain=dstnat dst-address=<IP_PUBLICZNY> protocol=udp dst-port=21116 action=dst-nat to-addresses=<IP_SERWERA> comment="RustDesk hairpin"
+/ip firewall nat add chain=srcnat src-address=<SIEC_LAN>/24 dst-address=<IP_SERWERA> protocol=tcp dst-port=21115-21117 action=masquerade comment="RustDesk hairpin"
+/ip firewall nat add chain=srcnat src-address=<SIEC_LAN>/24 dst-address=<IP_SERWERA> protocol=udp dst-port=21116 action=masquerade comment="RustDesk hairpin"
+```
+
+**Nie dodawaj** statycznego wpisu DNS kierującego nazwę serwera na adres lokalny.
+macOS (od wersji 15) wymaga wtedy dla aplikacji zgody „Sieć lokalna”, której aplikacja
+bez podpisu Apple często nawet nie potrafi poprosić. Objaw jest taki: `nc` z Terminala działa,
+a aplikacja stoi na „Łączenie”. Z publicznym adresem i hairpinem żadna zgoda nie jest potrzebna.
+
+Diagnostyka z Maca:
+```bash
+host zdalny.twojadomena.pl                 # powinien pokazać publiczny IP
+nc -vz -G 3 zdalny.twojadomena.pl 21116    # TCP do serwera
+nc -vzu zdalny.twojadomena.pl 21116        # UDP do serwera
+```
+Komunikat **„Niezgodność klucza”** oznacza, że klucz wbudowany w aplikację różni się od
+`server/data/id_ed25519.pub`. Klucz ma dokładnie 44 znaki i kończy się na `=`.
+
 ```bash
 git clone <to-repo> remote && cd remote/server
 sudo ./setup.sh remote.twojadomena.pl      # albo publiczny IP
