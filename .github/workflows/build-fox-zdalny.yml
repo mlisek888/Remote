@@ -424,10 +424,11 @@ jobs:
       shell: bash
       if: env.UPLOAD_ARTIFACT == 'true'
       run: |
+        mv ./rustdesk/rustdesk.exe ./rustdesk/FoxZdalny.exe
         sed -i '/dpiAware/d' res/manifest.xml
         pushd ./libs/portable
         pip3 install -r requirements.txt
-        python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+        python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/FoxZdalny.exe
         popd
         mkdir -p ./SignOutput
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
@@ -436,10 +437,11 @@ jobs:
       shell: bash
       run: |
         rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc
+        mv ./rustdesk-pomoc/FoxZdalny.exe ./rustdesk-pomoc/FoxPomoc.exe
         cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json
         cp ./fox/client/branding/variant-assets/fox-pomoc/* ./rustdesk-pomoc/data/flutter_assets/assets/
         pushd ./libs/portable
-        python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe
+        python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/FoxPomoc.exe
         popd
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxPomoc-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
         ls -l ./SignOutput

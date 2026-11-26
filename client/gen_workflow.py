@@ -127,14 +127,22 @@ win["steps"][i]["run"] = L(str(win["steps"][i]["run"]).replace(
     "./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe",
     "./SignOutput/FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.exe"))
 assert "FoxZdalny-" in win["steps"][i]["run"]
+# The Windows installer copies the folder as-is and then registers <app-name>.exe as the
+# service, so the main executable must already carry the app name (as RustDesk's own
+# custom-client packages do).
+run = str(win["steps"][i]["run"])
+assert "-e ../../rustdesk/rustdesk.exe" in run
+win["steps"][i]["run"] = L("mv ./rustdesk/rustdesk.exe ./rustdesk/FoxZdalny.exe\n" +
+                           run.replace("-e ../../rustdesk/rustdesk.exe", "-e ../../rustdesk/FoxZdalny.exe"))
 win["steps"] += [
     # Same binary, packed together with the Fox Pomoc config (see apply_branding.py).
     {"name": "Build Fox Pomoc (support) executable", "shell": "bash", "run": L(
         "rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc\n"
+        "mv ./rustdesk-pomoc/FoxZdalny.exe ./rustdesk-pomoc/FoxPomoc.exe\n"
         "cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json\n"
         "cp ./fox/client/branding/variant-assets/fox-pomoc/* ./rustdesk-pomoc/data/flutter_assets/assets/\n"
         "pushd ./libs/portable\n"
-        "python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe\n"
+        "python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/FoxPomoc.exe\n"
         "popd\n"
         "mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxPomoc-${{ env.VERSION }}-${{ matrix.job.arch }}.exe\n"
         "ls -l ./SignOutput\n")},
