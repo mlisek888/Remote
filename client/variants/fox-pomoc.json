@@ -1,0 +1,21 @@
+{
+  "id": "fox-pomoc",
+  "app_name": "FoxPomoc",
+  "display_name": "Fox Pomoc",
+  "bundle_id": "pl.foxfotograf.pomoc",
+  "_comment": "Aplikacja dla osob, ktorym pomagasz: bez instalacji, tylko przyjmuje polaczenia, jednorazowe haslo.",
+  "override_settings": {
+    "verification-method": "use-temporary-password",
+    "approve-mode": "both",
+    "temporary-password-length": "6",
+    "enable-check-update": "N",
+    "allow-auto-update": "N"
+  },
+  "hard_settings": {
+    "conn-type": "incoming",
+    "disable-installation": "Y",
+    "disable-settings": "Y",
+    "disable-ab": "Y",
+    "disable-account": "Y"
+  }
+}

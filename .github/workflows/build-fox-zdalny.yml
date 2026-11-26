@@ -428,11 +428,21 @@ jobs:
         mkdir -p ./SignOutput
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
 
+    - name: Build Fox Pomoc (support) executable
+      shell: bash
+      run: |
+        rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc
+        cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json
+        pushd ./libs/portable
+        python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe
+        popd
+        mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxPomoc-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+        ls -l ./SignOutput
     - name: Upload Fox Zdalny (Windows)
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: fox-windows-${{ matrix.job.arch }}
-        path: ./SignOutput/FoxZdalny-*.exe
+        path: ./SignOutput/Fox*.exe
         if-no-files-found: error
   build-macos:
     name: ${{ matrix.job.target }}
@@ -591,20 +601,24 @@ jobs:
         fi
         ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}
 
-    - name: Rebrand app bundle
+    - name: Rebrand app bundles
       shell: bash
-      run: bash fox/client/macos_rebrand.sh ./flutter/build/macos/Build/Products/Release
+      run: |
+        mkdir -p ./pomoc && ditto ./flutter/build/macos/Build/Products/Release/RustDesk.app ./pomoc/RustDesk.app
+        bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json
+        bash fox/client/macos_rebrand.sh fox/client/variants/fox-zdalny.json ./flutter/build/macos/Build/Products/Release
     - name: Create dmg
       shell: bash
       run: |
         CREATE_DMG="$(readlink -f "$(command -v create-dmg)")"
         sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
         create-dmg --volname "Fox Zdalny" --icon "FoxZdalny.app" 200 190 --hide-extension "FoxZdalny.app" --window-size 800 400 --app-drop-link 600 185 FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./flutter/build/macos/Build/Products/Release/FoxZdalny.app
+        create-dmg --volname "Fox Pomoc" --icon "FoxPomoc.app" 200 190 --hide-extension "FoxPomoc.app" --window-size 800 400 --app-drop-link 600 185 FoxPomoc-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./pomoc/FoxPomoc.app
     - name: Upload Fox Zdalny (macOS)
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: fox-macos-${{ matrix.job.arch }}
-        path: FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg
+        path: Fox*-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg
         if-no-files-found: error
   build-linux:
     needs: [generate-bridge]
@@ -934,3 +948,15 @@ jobs:
         tag_name: fox-zdalny-${{ env.VERSION }}-${{ github.run_number }}
         name: Fox Zdalny ${{ env.VERSION }} (build ${{ github.run_number }})
         files: dist/*
+    - name: Publish Fox Pomoc download links
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        mkdir -p pomoc
+        cp dist/FoxPomoc-*-x86_64.exe pomoc/FoxPomoc-Windows.exe
+        cp dist/FoxPomoc-*-aarch64.dmg pomoc/FoxPomoc-Mac-Apple.dmg
+        cp dist/FoxPomoc-*-x86_64.dmg pomoc/FoxPomoc-Mac-Intel.dmg
+        gh release delete pomoc --cleanup-tag --yes || true
+        gh release create pomoc pomoc/* --target "$GITHUB_SHA" --latest=false --title "Fox Pomoc" --notes "Pobierz, uruchom i podaj ID oraz haslo osobie, ktora Ci pomaga."

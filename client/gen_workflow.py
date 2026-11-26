@@ -123,9 +123,20 @@ win["steps"][i]["run"] = L(str(win["steps"][i]["run"]).replace(
     "./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe",
     "./SignOutput/FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.exe"))
 assert "FoxZdalny-" in win["steps"][i]["run"]
-win["steps"].append({"name": "Upload Fox Zdalny (Windows)", "uses": UPLOAD,
-                     "with": {"name": "fox-windows-${{ matrix.job.arch }}",
-                              "path": "./SignOutput/FoxZdalny-*.exe", "if-no-files-found": "error"}})
+win["steps"] += [
+    # Same binary, packed together with the Fox Pomoc config (see apply_branding.py).
+    {"name": "Build Fox Pomoc (support) executable", "shell": "bash", "run": L(
+        "rm -rf ./rustdesk-pomoc && cp -r ./rustdesk ./rustdesk-pomoc\n"
+        "cp ./fox_variants/fox-pomoc.json ./rustdesk-pomoc/fox_custom.json\n"
+        "pushd ./libs/portable\n"
+        "python3 ./generate.py -f ../../rustdesk-pomoc/ -o . -e ../../rustdesk-pomoc/rustdesk.exe\n"
+        "popd\n"
+        "mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/FoxPomoc-${{ env.VERSION }}-${{ matrix.job.arch }}.exe\n"
+        "ls -l ./SignOutput\n")},
+    {"name": "Upload Fox Zdalny (Windows)", "uses": UPLOAD,
+     "with": {"name": "fox-windows-${{ matrix.job.arch }}",
+              "path": "./SignOutput/Fox*.exe", "if-no-files-found": "error"}},
+]
 jobs["build-windows"] = win
 
 # --- macOS arm64 + x86_64 ----------------------------------------------------
@@ -135,18 +146,23 @@ mac = rework(fb["jobs"]["build-for-macOS"], {
     "create unsigned dmg", "Upload unsigned macOS app", "Codesign app and create signed dmg",
     "Rename rustdesk", "Upload signed macOS DMG", "Publish DMG package",
 })
+REL = "./flutter/build/macos/Build/Products/Release"
+DMG = ("create-dmg --volname \"{disp}\" --icon \"{app}.app\" 200 190 --hide-extension \"{app}.app\" "
+       "--window-size 800 400 --app-drop-link 600 185 "
+       "{app}-${{{{ env.VERSION }}}}-${{{{ matrix.job.arch }}}}.dmg {dir}/{app}.app\n")
 mac["steps"] += [
-    {"name": "Rebrand app bundle", "shell": "bash",
-     "run": "bash fox/client/macos_rebrand.sh ./flutter/build/macos/Build/Products/Release"},
+    {"name": "Rebrand app bundles", "shell": "bash", "run": L(
+        "mkdir -p ./pomoc && ditto %s/RustDesk.app ./pomoc/RustDesk.app\n"
+        "bash fox/client/macos_rebrand.sh fox/client/variants/fox-pomoc.json ./pomoc ./fox_variants/fox-pomoc.json\n"
+        "bash fox/client/macos_rebrand.sh fox/client/variants/fox-zdalny.json %s\n" % (REL, REL))},
     {"name": "Create dmg", "shell": "bash", "run": L(
         'CREATE_DMG="$(readlink -f "$(command -v create-dmg)")"\n'
         "sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' \"$CREATE_DMG\"\n"
-        'create-dmg --volname "Fox Zdalny" --icon "FoxZdalny.app" 200 190 --hide-extension "FoxZdalny.app" '
-        "--window-size 800 400 --app-drop-link 600 185 "
-        "FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./flutter/build/macos/Build/Products/Release/FoxZdalny.app\n")},
+        + DMG.format(disp="Fox Zdalny", app="FoxZdalny", dir=REL)
+        + DMG.format(disp="Fox Pomoc", app="FoxPomoc", dir="./pomoc"))},
     {"name": "Upload Fox Zdalny (macOS)", "uses": UPLOAD,
      "with": {"name": "fox-macos-${{ matrix.job.arch }}",
-              "path": "FoxZdalny-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg", "if-no-files-found": "error"}},
+              "path": "Fox*-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg", "if-no-files-found": "error"}},
 ]
 jobs["build-macos"] = mac
 
@@ -183,6 +199,18 @@ jobs["release"] = {
             "tag_name": "fox-zdalny-${{ env.VERSION }}-${{ github.run_number }}",
             "name": "Fox Zdalny ${{ env.VERSION }} (build ${{ github.run_number }})",
             "files": "dist/*"}},
+        # Fox Pomoc goes to a PUBLIC release with fixed file names, so the download links never change:
+        #   https://github.com/<owner>/<repo>/releases/download/pomoc/FoxPomoc-Windows.exe
+        {"name": "Publish Fox Pomoc download links", "shell": "bash",
+         "env": {"GH_TOKEN": "${{ github.token }}", "GH_REPO": "${{ github.repository }}"},
+         "run": L(
+             "mkdir -p pomoc\n"
+             "cp dist/FoxPomoc-*-x86_64.exe pomoc/FoxPomoc-Windows.exe\n"
+             "cp dist/FoxPomoc-*-aarch64.dmg pomoc/FoxPomoc-Mac-Apple.dmg\n"
+             "cp dist/FoxPomoc-*-x86_64.dmg pomoc/FoxPomoc-Mac-Intel.dmg\n"
+             "gh release delete pomoc --cleanup-tag --yes || true\n"
+             "gh release create pomoc pomoc/* --target \"$GITHUB_SHA\" --latest=false "
+             "--title \"Fox Pomoc\" --notes \"Pobierz, uruchom i podaj ID oraz haslo osobie, ktora Ci pomaga.\"\n")},
     ],
 }
 

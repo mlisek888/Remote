@@ -16,7 +16,41 @@ Budowanie odbywa się na GitHub Actions (repo jest publiczne, więc minuty są d
 | Dostęp przychodzący | tylko stałe hasło, bez klikania „Akceptuj” |
 | Sprawdzanie aktualizacji | wyłączone (żeby nie podsuwało zwykłego RustDeska) |
 
-Zmiany robisz w `client/branding.json`.
+Zmiany robisz w `client/variants/fox-zdalny.json`.
+
+## Fox Pomoc – dla osób, którym pomagasz
+
+Druga aplikacja z tego samego builda, do pomocy „na telefon”:
+
+1. Ktoś dzwoni. Wysyłasz mu link (SMS-em, mailem):
+   - Windows: `https://github.com/mlisek888/Remote/releases/download/pomoc/FoxPomoc-Windows.exe`
+   - Mac z Apple M1–M4: `.../pomoc/FoxPomoc-Mac-Apple.dmg`
+   - Mac z Intelem: `.../pomoc/FoxPomoc-Mac-Intel.dmg`
+2. Osoba pobiera plik i go uruchamia. **Nic się nie instaluje.**
+3. Program pokazuje **ID** i **6-znakowe hasło jednorazowe**. Osoba czyta Ci je przez telefon.
+4. Łączysz się ze swojego Fox Zdalny. Osoba może też po prostu kliknąć „Akceptuj”.
+5. Po zamknięciu programu dostęp znika. Przy następnym uruchomieniu będzie nowe hasło.
+
+| | Fox Zdalny (Twoje komputery) | Fox Pomoc (dla innych) |
+|---|---|---|
+| Instalacja | jako usługa | brak, uruchamiasz plik |
+| Hasło | stałe | jednorazowe, zmienia się |
+| Łączenie się z niego dalej | tak | **nie**, tylko przyjmuje połączenia |
+| Ustawienia | zablokowana sieć | całkiem ukryte |
+
+Linki są stałe: każdy nowy build podmienia pliki pod tymi samymi adresami.
+To jedyne publiczne pliki w repo. Nie dają nikomu dostępu do Twoich komputerów, bo Fox Pomoc
+potrafi tylko przyjmować połączenia. Zawierają jedynie adres serwera i klucz publiczny.
+
+Co zobaczy osoba po drugiej stronie (bez płatnych podpisów):
+- **Windows**: niebieskie okno SmartScreen → „Więcej informacji” → „Uruchom mimo to”.
+- **Mac**: „Nie można otworzyć…” → Ustawienia systemowe → Prywatność i ochrona → na dole
+  **„Otwórz mimo to”**. Potem zgoda na *Nagrywanie ekranu* i *Dostępność*, po czym trzeba
+  program zamknąć i uruchomić ponownie. Na Macu przeprowadzenie kogoś przez to przez telefon
+  zajmuje kilka minut. Podpis Apple (99 USD/rok) usunąłby pierwszy krok.
+
+Dla wygody możesz zrobić krótki adres na swojej domenie, np. `pomoc.foxfotograf.pl`,
+przekierowujący na link do Windows.
 
 ## 1. Jednorazowo: sekrety w GitHubie
 
@@ -42,6 +76,7 @@ a nie publicznie. W nim są pliki:
 | `FoxZdalny-1.5.3-x86_64.dmg` | Mac z Intelem |
 | `FoxZdalny-1.5.3-x86_64.deb` | Ubuntu / Debian / Mint |
 | `FoxZdalny-1.5.3-x86_64.rpm` | Fedora / RHEL |
+| `FoxPomoc-1.5.3-*.exe / .dmg` | wersja „pomoc” (te same pliki trafiają też pod publiczne linki) |
 
 ## 3. Instalacja na komputerach
 
@@ -98,14 +133,15 @@ python3 client/branding/make_icons.py --from-png
 
 ```
 client/
-  branding.json          nazwa, bundle id, wymuszone ustawienia
+  variants/fox-zdalny.json   Twoja aplikacja: nazwa, bundle id, wymuszone ustawienia
+  variants/fox-pomoc.json    aplikacja „pomoc”: bez instalacji, tylko przychodzące, hasło jednorazowe
   apply_branding.py      nakłada branding na źródła RustDesk (uruchamiany w CI)
-  macos_rebrand.sh       zmienia RustDesk.app → FoxZdalny.app i podpisuje ad-hoc
+  macos_rebrand.sh       zmienia RustDesk.app → FoxZdalny.app / FoxPomoc.app i podpisuje ad-hoc
   gen_workflow.py        generuje .github/workflows/build-fox-zdalny.yml z CI RustDeska
   branding/              ikona, logo, generator ikon, gotowe pliki (overlay/)
 clients/fox/             skrypty instalacyjne dla komputerów
 ```
 
 Licencja: RustDesk jest na AGPL-3.0. Do własnego użytku możesz go dowolnie zmieniać.
-Gdybyś kiedyś dawał tę aplikację innym osobom, musisz udostępnić im też jej kod
-(to repo plus źródła RustDesk).
+Fox Pomoc dajesz innym osobom, więc AGPL wymaga, żeby kod był dla nich dostępny.
+Publiczne repo plus źródła RustDesk to spełnia, więc repo powinno zostać publiczne.
